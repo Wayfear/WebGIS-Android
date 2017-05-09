@@ -29,11 +29,15 @@ import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+import rx.functions.Action1;
+
+public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
 
@@ -44,6 +48,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     LocationManager mLocationManager;
     private LocationClient mLocationClient = null;
 
+    static private String TAG = "MapActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +57,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         mMapView = (MapView) findViewById(R.id.bmapView);
-        Button btn = (Button)findViewById(R.id.button);
-        btn.setOnClickListener(this);
+        Button btn1 = (Button)findViewById(R.id.button1);
 
+        Button btn3  = (Button)findViewById(R.id.button3);
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationHelper = new LocationHelper(this);
@@ -63,13 +69,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLocationClient = new LocationClient(getApplicationContext());
 
         BDLocationListener listener = new MyLocationListener();
-
-        //注册位置监听器
         mLocationClient.registerLocationListener(listener);
 
-//        BitmapDescriptor mCurrentMarker = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
-//        MyLocationConfiguration config = new MyLocationConfiguration(mCurrentMode, true, mCurrentMarker);
-//        mBaiduMap.setMyLocationConfiguration();
     }
 
 
@@ -157,10 +158,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .target(latlng)
                     .zoom(12)
                     .build();
-//定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
-
+            //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
             MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
-//改变地图状态
+            //改变地图状态
             mBaiduMap.setMapStatus(mMapStatusUpdate);
 
 
@@ -168,14 +168,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void onClick(View v) {
+    public void GetMap(View v){
+
+        MapLoader mapLoader = new MapLoader();
+
+        mapLoader.getMapbyID(80).subscribe(new Action1<MapDO>() {
+            @Override
+            public void call(MapDO mapDO) {
+                Log.i(TAG, String.valueOf(mapDO.getAccount_id()));
+            }
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                Log.e(TAG,"error message:"+throwable.getMessage());
+            }
+        });
+
+    }
+
+    public void DrawLine(View v){
+        List<LatLng> demo=new ArrayList<LatLng>();
+        demo.add(new LatLng(39.963175, 116.400244));
+        demo.add(new LatLng(39.942821, 116.369199));
+        demo.add(new LatLng(39.939723, 116.425541));
+        demo.add(new LatLng(39.906965, 116.401394));
+        OverlayOptions ooPolyline = new PolylineOptions().width(5)
+                .color(0xAAFF0000).points(demo).visible(true);
+        mBaiduMap.addOverlay(ooPolyline);
+    }
+
+
+    public void FindPosition(View v) {
 
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy
         );//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
         option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
-        int span = 5000; //5秒发送一次
+        int span = 1000; //5秒发送一次
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
         option.setOpenGps(true);//可选，默认false,设置是否使用gps
@@ -190,6 +219,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLocationClient.start(); //启动位置请求
         mLocationClient.requestLocation();//发送请求
     }
+
+
+
 
 
     @Override
