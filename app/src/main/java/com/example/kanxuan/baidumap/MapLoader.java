@@ -26,12 +26,6 @@ public class MapLoader extends ObjectLoader{
     }
 
     public Observable<MapDO> getMapbyID(int mapID){
-//       return observe(mapService.getMapByID(mapID).map(new Func1<BaseResponse<MapDO>, MapDO>() {
-//           @Override
-//           public MapDO call(BaseResponse<MapDO> mapDOBaseResponse) {
-//               return mapDOBaseResponse.data;
-//           }
-//       }));
        return observe(mapService.getMapByID(mapID)).map(new PayLoad<MapDO>());
     }
 
