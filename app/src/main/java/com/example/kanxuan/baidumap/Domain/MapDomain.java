@@ -1,4 +1,4 @@
-package com.example.kanxuan.baidumap;
+package com.example.kanxuan.baidumap.Domain;
 
 import java.util.List;
 

@@ -1,16 +1,16 @@
 package com.example.kanxuan.baidumap;
 
+import com.example.kanxuan.baidumap.Domain.MapDO;
 import com.example.kanxuan.baidumap.http.BaseResponse;
 import com.example.kanxuan.baidumap.http.ObjectLoader;
 import com.example.kanxuan.baidumap.http.PayLoad;
 import com.example.kanxuan.baidumap.http.RetrofitServiceManager;
 
-import java.util.List;
-
 import retrofit2.http.GET;
+import retrofit2.http.PATCH;
+import retrofit2.http.POST;
 import retrofit2.http.Query;
 import rx.Observable;
-import rx.functions.Func1;
 
 
 /**
@@ -33,6 +33,20 @@ public class MapLoader extends ObjectLoader{
         @GET("map/maps/id")
         Observable<BaseResponse<MapDO>> getMapByID(@Query("mapId") int mapID);
     }
+
+    public interface LayerService {
+        @POST("layer/emptyLayers")
+        Observable<BaseResponse<Object>> addEmptyLayer(@Query("mapId") int mapID, @Query("type")String type);
+
+        @PATCH("layer/layers/point/id")
+        Observable<BaseResponse<Object>> updatePointLayer(@Query("mapId") int mapID, @Query("type")String type);
+
+        @PATCH("layer/layers/line/id")
+        Observable<BaseResponse<Object>> updateLineLayer(@Query("mapId") int mapID, @Query("type")String type);
+
+    }
+
+
 
 
 
