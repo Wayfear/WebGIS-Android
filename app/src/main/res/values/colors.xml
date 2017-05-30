@@ -10,4 +10,10 @@
     <color name="color_cccccc">#cccccc</color>
     <color name="color_d81e06">#d81e06</color>
     <color name="color_b0b8b2">#b0b8b2</color>
+    <color name="primary">#2d2d2d</color>
+    <color name="secondary">#FF4081</color>
+    <color name="accent">#33b5e5</color>
+    <color name="divider">#CCC</color>
+    <color name="icons">#FFF</color>
+    <color name="item_background">#FFF</color>
 </resources>

@@ -1,27 +1,27 @@
 package com.example.kanxuan.baidumap.Domain;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Created by kanxuan on 2017/5/16.
  */
 
-public abstract class WebLayer implements Serializable {
+public class WebPointLayer implements Serializable {
 
-    private String layerId;
+    private String id;
 
-    public WebLayer() {
+    private List<PointDomain> data;
+
+    public WebPointLayer() {
     }
 
-    public WebLayer(String layerId) {
-        this.layerId = layerId;
+
+    public String getId() {
+        return id;
     }
 
-    public String getLayerId() {
-        return layerId;
-    }
-
-    public void setLayerId(String layerId) {
-        this.layerId = layerId;
+    public void setId(String id) {
+        this.id = id;
     }
 }

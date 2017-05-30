@@ -1,4 +1,4 @@
-package com.example.kanxuan.baidumap.http;
+package com.example.kanxuan.baidumap.Http;
 
 import com.example.kanxuan.baidumap.ApiConfig;
 

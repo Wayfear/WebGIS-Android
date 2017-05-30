@@ -1,16 +1,14 @@
 package com.example.kanxuan.baidumap;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.location.Location;
-import android.location.LocationListener;
+import android.content.Intent;
+import android.graphics.Color;
 import android.location.LocationManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -26,24 +24,41 @@ import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MarkerOptions;
-import com.baidu.mapapi.map.MyLocationConfiguration;
-import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.model.LatLng;
+import com.example.kanxuan.baidumap.Domain.BaseDomain;
+import com.example.kanxuan.baidumap.Domain.HistoryData;
+import com.example.kanxuan.baidumap.Domain.LayerLineDate;
+import com.example.kanxuan.baidumap.Domain.LayerPointDate;
+import com.example.kanxuan.baidumap.Domain.LineDomain;
+import com.example.kanxuan.baidumap.Domain.MapData;
+import com.example.kanxuan.baidumap.Domain.MapDomain;
+import com.example.kanxuan.baidumap.Domain.PointDomain;
+import com.example.kanxuan.baidumap.Domain.SerilzeData;
+import com.example.kanxuan.baidumap.Enums.TypeEnum;
+import com.example.kanxuan.baidumap.HttpLoader.MapLoader;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
+import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.HamButton;
+import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.OnBoomListenerAdapter;
 import rx.functions.Action1;
 
 public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
-
+    private BoomMenuButton bmb;
     MapView mMapView = null;
     BaiduMap mBaiduMap = null;
-    LocationHelper locationHelper;
+//    LocationHelper locationHelper;
+
+    private MapData mapData;
+    private List<HistoryData> historyData;
 
     LocationManager mLocationManager;
     private LocationClient mLocationClient = null;
@@ -51,18 +66,76 @@ public class MainActivity extends AppCompatActivity {
     static private String TAG = "MapActivity";
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_main);
-        mMapView = (MapView) findViewById(R.id.bmapView);
-        Button btn1 = (Button)findViewById(R.id.button1);
+        bmb = (BoomMenuButton)findViewById(R.id.bmb);
+        assert bmb != null;
+        bmb.addBuilder(new HamButton.Builder().normalImageRes(R.mipmap.location).normalText("定位").subNormalText("获取个人定位"));
+        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.layer).normalText("选择图层").subNormalText("选择某个图层"));
+//        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.history).normalText("历史版本").subNormalText("选择时间版本"));
+        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.add).normalText("添加图层").subNormalText("..."));
 
-        Button btn3  = (Button)findViewById(R.id.button3);
+        Intent lastIntent = getIntent();
+        SerilzeData<BaseDomain> da = (SerilzeData<BaseDomain>)lastIntent.getSerializableExtra("maps");
+        List<BaseDomain> maps = da.getData();
+
+       if(maps.size()!=0) {
+           MapLoader mapLoader = new MapLoader();
+           if(maps.get(0).getType()== TypeEnum.YJG) {
+               mapLoader.getCoverLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerPointDate>() {
+                   @Override
+                   public void call(LayerPointDate layerDate) {
+                       Log.e(TAG, "success");
+                       mapData = new MapData(layerDate);
+                       DrawCover();
+                   }
+               }, new Action1<Throwable>() {
+                   @Override
+                   public void call(Throwable throwable) {
+                       Log.e(TAG,"error message:"+throwable.getMessage());
+                   }
+               });
+           }
+           else {
+               mapLoader.getLineLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerLineDate>() {
+                   @Override
+                   public void call(LayerLineDate layerDate) {
+                       Log.e(TAG, "success");
+                       mapData = new MapData(layerDate);
+                       DrawLine();
+                   }
+               }, new Action1<Throwable>() {
+                   @Override
+                   public void call(Throwable throwable) {
+                       Log.e(TAG,"error message:"+throwable.getMessage());
+                   }
+               });
+           }
+
+        }
+
+
+        bmb.setOnBoomListener(new OnBoomListenerAdapter() {
+            @Override
+            public void onClicked(int index, BoomButton boomButton) {
+                super.onClicked(index, boomButton);
+                changeBoomButton(index);
+            }
+        });
+
+
+        mMapView = (MapView) findViewById(R.id.bmapView);
+//        Button btn1 = (Button)findViewById(R.id.button1);
+//
+//        Button btn3  = (Button)findViewById(R.id.button3);
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationHelper = new LocationHelper(this);
+//        locationHelper = new LocationHelper(this);
 
         mBaiduMap = mMapView.getMap();
         mBaiduMap.setMyLocationEnabled(true);
@@ -70,7 +143,48 @@ public class MainActivity extends AppCompatActivity {
 
         BDLocationListener listener = new MyLocationListener();
         mLocationClient.registerLocationListener(listener);
+        getHistoryData();
 
+    }
+
+    private void getHistoryData() {
+        MapLoader mapLoader = new MapLoader();
+        mapLoader.getHistoriesByMapId(74).subscribe(new Action1<List<HistoryData>>() {
+            @Override
+            public void call(List<HistoryData> historyDatas) {
+                historyData = historyDatas;
+            }
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                Log.e(TAG, "error message:" + throwable.getMessage());
+            }
+        });
+
+    }
+
+    private void changeBoomButton(int index) {
+
+
+        HamButton.Builder builder = (HamButton.Builder) bmb.getBuilder(index);
+
+        switch (index) {
+            case 0:
+                FindPosition();
+                break;
+            case 1:
+                Intent intent = new Intent(MainActivity.this, SelectLayerActivity.class);
+                Bundle data = new Bundle();
+                data.putSerializable("history", new SerilzeData<HistoryData>(historyData));
+                intent.putExtras(data);
+                intent.setFlags(0);
+                startActivityForResult(intent,0);
+                break;
+            case 2:
+                break;
+            case 4:
+                break;
+        }
     }
 
 
@@ -149,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             Log.d("BaiduLocationApiDem", sb.toString());
+            mBaiduMap.clear();
             BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
             //创建一个图层选项
             LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -156,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
             mBaiduMap.addOverlay(options);
             MapStatus mMapStatus = new MapStatus.Builder()
                     .target(latlng)
-                    .zoom(12)
+                    .zoom(16)
                     .build();
             //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
             MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
@@ -168,43 +283,94 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void GetMap(View v){
 
-        MapLoader mapLoader = new MapLoader();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode==0 && resultCode==0) {
+            Bundle bundle = data.getExtras();
+            int group = bundle.getInt("gIndex");
+            int child = bundle.getInt("cIndex");
+            MapLoader mapLoader = new MapLoader();
+            if(historyData.get(group).getData().get(child).getType()== TypeEnum.YJG) {
+                mapLoader.getCoverLayerByLayerID(historyData.get(group).getData().get(child).getId()).subscribe(new Action1<LayerPointDate>() {
+                    @Override
+                    public void call(LayerPointDate layerDate) {
+                        Log.e(TAG, "success");
+                        mapData = new MapData(layerDate);
+                        DrawCover();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(TAG,"error message:"+throwable.getMessage());
+                    }
+                });
+            }
+            else {
+                mapLoader.getLineLayerByLayerID(historyData.get(group).getData().get(child).getId()).subscribe(new Action1<LayerLineDate>() {
+                    @Override
+                    public void call(LayerLineDate layerDate) {
+                        Log.e(TAG, "success");
+                        mapData = new MapData(layerDate);
+                        DrawLine();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(TAG,"error message:"+throwable.getMessage());
+                    }
+                });
+            }
+        }
+    }
 
-        mapLoader.getMapbyID(80).subscribe(new Action1<MapDO>() {
-            @Override
-            public void call(MapDO mapDO) {
-                Log.i(TAG, String.valueOf(mapDO.getAccount_id()));
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                Log.e(TAG,"error message:"+throwable.getMessage());
-            }
-        });
+    public void DrawLine(){
+        mBaiduMap.clear();
+        List<List<LatLng>> data = mapData.ToDrawList();
+                // 添加图层功能
+        for(int i=0;i<data.size();i++) {
+            OverlayOptions ooPolyline = new PolylineOptions().width(5)
+                    .color(0xAAFF0000).points(data.get(0)).visible(true);
+            mBaiduMap.addOverlay(ooPolyline);
+        }
+        if(data.size()!=0 && data.get(0).size()!=0) {
+            MapStatus mMapStatus = new MapStatus.Builder()
+                    .target(data.get(0).get(0))
+                    .zoom(16)
+                    .build();
+            MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
+            mBaiduMap.setMapStatus(mMapStatusUpdate);
+        }
 
     }
 
-    public void DrawLine(View v){
-        List<LatLng> demo=new ArrayList<LatLng>();
-        demo.add(new LatLng(39.963175, 116.400244));
-        demo.add(new LatLng(39.942821, 116.369199));
-        demo.add(new LatLng(39.939723, 116.425541));
-        demo.add(new LatLng(39.906965, 116.401394));
-        OverlayOptions ooPolyline = new PolylineOptions().width(5)
-                .color(0xAAFF0000).points(demo).visible(true);
-        mBaiduMap.addOverlay(ooPolyline);
+    public void DrawCover() {
+        mBaiduMap.clear();
+        BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
+        LatLng latlng = new LatLng(10,10);
+        for(int i=0;i<mapData.getPointList().size();i++) {
+            latlng = new LatLng(mapData.getPointList().get(i).getY(), mapData.getPointList().get(i).getX());
+            OverlayOptions options = new MarkerOptions().position(latlng).icon(bitmapDescriptor);
+            mBaiduMap.addOverlay(options);
+
+        }
+        MapStatus mMapStatus = new MapStatus.Builder()
+                .target(latlng)
+                .zoom(16)
+                .build();
+        //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
+        MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
+        //改变地图状态
+        mBaiduMap.setMapStatus(mMapStatusUpdate);
     }
 
 
-    public void FindPosition(View v) {
 
+    public void FindPosition() {
         LocationClientOption option = new LocationClientOption();
-        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy
-        );//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
         option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
-        int span = 1000; //5秒发送一次
+        int span = 0; //5秒发送一次
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
         option.setOpenGps(true);//可选，默认false,设置是否使用gps

@@ -1,12 +1,13 @@
 package com.example.kanxuan.baidumap.Domain;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by kanxuan on 2017/5/9.
  */
 
-public class MapDO {
+public class MapDomain implements Serializable {
 
     private Integer account_id;
     private String name;

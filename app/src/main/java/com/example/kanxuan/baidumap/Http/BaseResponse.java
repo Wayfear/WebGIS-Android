@@ -1,4 +1,4 @@
-package com.example.kanxuan.baidumap.http;
+package com.example.kanxuan.baidumap.Http;
 
 /**
  * Created by kanxuan on 2017/5/9.
@@ -7,7 +7,6 @@ package com.example.kanxuan.baidumap.http;
 public class BaseResponse<T> {
     public int code;
     public String message;
-
     public T data;
 
     public boolean isSuccess(){

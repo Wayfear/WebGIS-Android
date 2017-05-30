@@ -1,4 +1,4 @@
-package com.example.kanxuan.baidumap.http;
+package com.example.kanxuan.baidumap.Http;
 
 /**
  * Created by kanxuan on 2017/5/9.

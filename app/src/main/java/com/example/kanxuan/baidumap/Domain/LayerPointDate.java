@@ -7,7 +7,7 @@ import java.util.Date;
  * Created by kanxuan on 2017/5/17.
  */
 
-public class LayerDate implements Serializable {
+public class LayerPointDate implements Serializable {
 
     private String id;
 
@@ -15,9 +15,9 @@ public class LayerDate implements Serializable {
     private String createTime;
     private String updateTime;
 
-    public LayerDate(){}
+    public LayerPointDate(){}
 
-    public LayerDate(CoverDomain data, String createTime, String updateTime) {
+    public LayerPointDate(CoverDomain data, String createTime, String updateTime) {
         this.id = id;
         this.data = data;
         this.createTime = createTime;
@@ -25,7 +25,7 @@ public class LayerDate implements Serializable {
     }
 
 
-    public LayerDate(String id, CoverDomain data, String createTime, String updateTime) {
+    public LayerPointDate(String id, CoverDomain data, String createTime, String updateTime) {
         this.id = id;
         this.data = data;
         this.createTime = createTime;

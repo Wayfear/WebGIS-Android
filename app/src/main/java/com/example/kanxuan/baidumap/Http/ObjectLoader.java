@@ -1,4 +1,4 @@
-package com.example.kanxuan.baidumap.http;
+package com.example.kanxuan.baidumap.Http;
 
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -14,5 +14,6 @@ public class ObjectLoader {
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
+
     }
 }

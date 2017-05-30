@@ -5,5 +5,5 @@ package com.example.kanxuan.baidumap;
  */
 
 public final class ApiConfig {
-    static public String BASE_URL = "http://192.168.1.112:8080/";
+    static public String BASE_URL = "http://wb.lab-sse.cn/";
 }
