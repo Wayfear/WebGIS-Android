@@ -20,4 +20,11 @@ public class HistoryData implements Serializable {
     public String getDate() {return date;}
 
     public List<BaseDomain> getData() {return data;}
+
+    public HistoryData() {}
+
+    public HistoryData(List<BaseDomain> maps) {
+        data = maps;
+        date =  "现在的图层";
+    }
 }

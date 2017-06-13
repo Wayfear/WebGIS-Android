@@ -28,8 +28,6 @@ public class RetrofitServiceManager {
         // 添加公共参数拦截器
         HttpCommonInterceptor commonInterceptor = new HttpCommonInterceptor.Builder()
                 .addHeaderParams("paltform","android")
-                .addHeaderParams("userToken","1234343434dfdfd3434")
-                .addHeaderParams("userId","123445")
                 .build();
         builder.addInterceptor(commonInterceptor);
         // 创建Retrofit

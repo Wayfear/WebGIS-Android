@@ -5,17 +5,26 @@ import com.example.kanxuan.baidumap.Domain.HistoryData;
 import com.example.kanxuan.baidumap.Domain.LayerLineDate;
 import com.example.kanxuan.baidumap.Domain.LayerPointDate;
 import com.example.kanxuan.baidumap.Domain.MapDomain;
+import com.example.kanxuan.baidumap.Domain.UpdateWebLineLayer;
+import com.example.kanxuan.baidumap.Domain.UpdateWebPointLayer;
 import com.example.kanxuan.baidumap.Http.BaseResponse;
 import com.example.kanxuan.baidumap.Http.ObjectLoader;
 import com.example.kanxuan.baidumap.Http.PayLoad;
 import com.example.kanxuan.baidumap.Http.RetrofitServiceManager;
+import com.example.kanxuan.baidumap.Http.UserLoginResponse;
 
 import java.util.List;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
+import retrofit2.http.Url;
 import rx.Observable;
 
 
@@ -63,6 +72,24 @@ public class MapLoader extends ObjectLoader{
         return observe(historyService.getHistoriesByMapId(mapId)).map(new PayLoad<List<HistoryData>>());
     }
 
+    public Observable<BaseResponse<Object>> updatePointLayer(UpdateWebPointLayer webPointLayer){
+        return observe(layerService.updatePointLayer(webPointLayer));
+    }
+
+    public Observable<BaseResponse<Object>> updateLineLayer(UpdateWebLineLayer webLineLayer){
+        return observe(layerService.updateLineLayer(webLineLayer));
+    }
+
+    public Call<ResponseBody> getImg(String url) {
+        return  mapService.downloadFileWithDynamicUrlSync(url);
+    }
+
+    public  Observable<UserLoginResponse> Login(String username, String password) {
+        return observe(mapService.Login(username, password).map(new PayLoad<UserLoginResponse>()));
+    }
+
+
+
 
 
     public interface MapService {
@@ -71,6 +98,13 @@ public class MapLoader extends ObjectLoader{
 
         @GET("map/maps/accountidandfolderid")
         Observable<BaseResponse<List<MapDomain>>> getMapByAccountId(@Query("accountId") int accoubntID, @Query("folderId") int folderId);
+
+        @GET
+        Call<ResponseBody> downloadFileWithDynamicUrlSync(@Url String fileUrl);
+
+        @FormUrlEncoded
+        @POST("auth/token")
+        Observable<BaseResponse<UserLoginResponse>> Login(@Field("username") String username, @Field("password") String password);
 
     }
 
@@ -95,6 +129,13 @@ public class MapLoader extends ObjectLoader{
 
         @GET("layer/layer")
         Observable<BaseResponse<LayerLineDate>> getLineLayerByLayerID(@Query("layerId") String layerId);
+
+        @PATCH("layer/layers/point/id")
+        Observable<BaseResponse<Object>> updatePointLayer(@Body UpdateWebPointLayer webLater);
+
+
+        @PATCH("layer/layers/line/id")
+        Observable<BaseResponse<Object>> updateLineLayer(@Body UpdateWebLineLayer webLater);
     }
 
     public interface HistoryService {

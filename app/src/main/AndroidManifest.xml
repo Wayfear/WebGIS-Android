@@ -24,6 +24,10 @@
     <uses-permission android:name="android.permission.READ_PROFILE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -37,7 +41,7 @@
 
         <activity
             android:name=".MainActivity"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
 
         <service
             android:name="com.baidu.location.f"
@@ -57,10 +61,19 @@
         <activity
             android:name=".SelectMapActivity"
             android:label="@string/title_activity_select_map"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".SelectLayerActivity"
             android:label="@string/title_activity_select_layer"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".ItemsActivity"
+            android:label="@string/title_activity_items"
+            android:theme="@style/AppTheme" />
+        <activity android:name=".SeviceActivity" />
+        <activity
+            android:name=".CommonUserActivity"
+            android:label="@string/title_activity_common_user"
             android:theme="@style/AppTheme"></activity>
     </application>
 

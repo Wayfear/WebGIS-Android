@@ -13,6 +13,7 @@ import android.support.v7.widget.RecyclerView;
 import android.widget.TextView;
 
 import com.example.kanxuan.baidumap.Domain.BaseDomain;
+import com.example.kanxuan.baidumap.Domain.HistoryData;
 import com.example.kanxuan.baidumap.Domain.MapDomain;
 import com.example.kanxuan.baidumap.Domain.SerilzeData;
 import com.example.kanxuan.baidumap.Domain.WebMapContent;
@@ -33,6 +34,7 @@ public class SelectMapActivity extends AppCompatActivity {
     SwipeToAction swipeToAction;
     List<MapDomain> maps = new ArrayList<>();
     final private String TAG = "Selected Activity";
+    String role;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,7 @@ public class SelectMapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_select_map);
         Intent lastIntent = getIntent();
         SerilzeData<MapDomain> da = (SerilzeData<MapDomain>)lastIntent.getSerializableExtra("maps");
+        role  = lastIntent.getStringExtra("role");
         maps = da.getData();
         recyclerView = (RecyclerView) findViewById(R.id.recycler);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -71,16 +74,17 @@ public class SelectMapActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onClick(MapDomain itemData) {
+            public void onClick(final MapDomain itemData) {
                 displaySnackbar(itemData.getName() + " clicked", null, null);
 
                 MapLoader mapLoader = new MapLoader();
-                mapLoader.getLayersByMapId(74).subscribe(new Action1<List<BaseDomain>>() {
+                mapLoader.getLayersByMapId(itemData.getId()).subscribe(new Action1<List<BaseDomain>>() {
                     @Override
                     public void call(List<BaseDomain> baseDomains) {
                         Intent intent = new Intent(SelectMapActivity.this, MainActivity.class);
                         Bundle data = new Bundle();
                         data.putSerializable("maps", new SerilzeData<BaseDomain>(baseDomains));
+                        data.putInt("mapId", itemData.getId());
                         intent.putExtras(data);
                         startActivity(intent);
                     }

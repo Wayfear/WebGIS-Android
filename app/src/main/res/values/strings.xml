@@ -22,4 +22,7 @@
     </string>
     <string name="title_activity_select_map">SelectMapActivity</string>
     <string name="title_activity_select_layer">SelectLayerActivity</string>
+    <string name="title_activity_items">ItemsActivity</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="title_activity_common_user">CommonUserActivity</string>
 </resources>

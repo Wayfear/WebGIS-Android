@@ -2,18 +2,31 @@ package com.example.kanxuan.baidumap.Domain;
 
 import com.example.kanxuan.baidumap.Enums.StatusEnum;
 
+import java.io.Serializable;
+
 /**
  * Created by kanxuan on 2017/5/16.
  */
 
-public class LineDomain {
+public class LineDomain  implements Serializable {
     private double x;
     private double y;
     private double z;
 
+    private String url;
+    private String id;
+
     private double x2;
     private double y2;
     private double z2;
+
+    public void setUrl(String url) {this.url = url;}
+
+    public String getUrl() {return url;}
+
+    public void setId(String id) {this.id = id;}
+
+    public String getId() {return id;}
 
     private StatusEnum status;
 

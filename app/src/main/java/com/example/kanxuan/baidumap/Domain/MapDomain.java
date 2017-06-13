@@ -14,6 +14,15 @@ public class MapDomain implements Serializable {
     private Integer folder;
     private String description;
     private List<String> layerIds;
+    private int id;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public Integer getAccount_id() {
         return account_id;

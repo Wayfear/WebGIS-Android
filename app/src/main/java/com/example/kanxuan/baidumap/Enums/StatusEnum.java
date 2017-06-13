@@ -5,8 +5,12 @@ package com.example.kanxuan.baidumap.Enums;
  */
 
 public enum  StatusEnum {
-    GOOD("001", "Good"),
-    BAD("002", "Bad");
+    LOST("001", "丢失"),
+    BREAK("002", "损坏"),
+    BLOCK("003", "堵塞"),
+    GOOD("004", "完好"),
+    SERVICE("005", "维修");
+
 
     private String code;
     private String value;

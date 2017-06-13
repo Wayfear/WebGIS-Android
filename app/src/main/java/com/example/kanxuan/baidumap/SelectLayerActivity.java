@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextPaint;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 
 import com.example.kanxuan.baidumap.Domain.HistoryData;
 import com.example.kanxuan.baidumap.Domain.SerilzeData;
+import com.example.kanxuan.baidumap.Enums.TypeEnum;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -75,15 +77,24 @@ public class SelectLayerActivity extends ExpandableListActivity {
 
             @Override
             public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-                LinearLayout ll = new LinearLayout(SelectLayerActivity.this);
-                ll.setOrientation(LinearLayout.HORIZONTAL);
-                ImageView logo = new ImageView(SelectLayerActivity.this);
-                ll.addView(logo);
+                LinearLayout ll = (LinearLayout)getLayoutInflater().inflate(R.layout.selectlayer, null);
                 SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date d1=new Date(Long.parseLong(historyData.get(groupPosition).getDate()));
-                String t1=format.format(d1);
+                String t1;
+                if( historyData.get(groupPosition).getDate().equals("现在的图层")){
+                    t1="可编辑图层";
+                }
+                else if(historyData.get(groupPosition).getDate()!=""){
+                    Date d1=new Date(Long.parseLong(historyData.get(groupPosition).getDate()));
+                    t1=format.format(d1);
+                }
+                else {
+                    t1 = "Null";
+                }
+
                 TextView textView = getTextView();
                 textView.setText(t1);
+                TextPaint tp = textView.getPaint();
+                tp.setFakeBoldText(true);
                 ll.addView(textView);
                 return ll;
             }
@@ -92,7 +103,14 @@ public class SelectLayerActivity extends ExpandableListActivity {
             public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 
                 TextView tv = getTextView();
-                tv.setText(historyData.get(groupPosition).getData().get(childPosition).getType().toString());
+                tv.setPadding(150,0,0,0);
+                if(historyData.get(groupPosition).getData().get(childPosition).getType()== TypeEnum.XSG)
+                {
+                    tv.setText("道路维修");
+                }
+                else {
+                    tv.setText("窨井盖");
+                }
                 return tv;
             }
 

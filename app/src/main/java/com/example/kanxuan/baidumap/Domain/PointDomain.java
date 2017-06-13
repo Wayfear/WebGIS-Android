@@ -2,15 +2,20 @@ package com.example.kanxuan.baidumap.Domain;
 
 import com.example.kanxuan.baidumap.Enums.StatusEnum;
 
+import java.io.Serializable;
+
 /**
  * Created by kanxuan on 2017/5/16.
  */
 
-public class PointDomain {
+public class PointDomain  implements Serializable {
+    private String url;
+    private String id;
     private double x;
     private double y;
     private double z;
     private StatusEnum status;
+    public void setUrl(String url) {this.url = url;}
 
     public PointDomain() {
     }
@@ -21,6 +26,12 @@ public class PointDomain {
         this.z = z;
         this.status = status;
     }
+
+    public void setId(String id) {this.id = id;}
+
+    public String getId() {return id;}
+
+    public String getUrl() {return url;}
 
     public double getX() {
         return x;

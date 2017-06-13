@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/group"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="80sp">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="60sp"
+        android:layout_height="60sp"
+        android:src="@mipmap/history"
+        android:layout_margin="10sp"/>
+
+
+</LinearLayout>

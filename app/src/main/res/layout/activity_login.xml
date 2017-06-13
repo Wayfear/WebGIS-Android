@@ -19,6 +19,7 @@
         android:scaleType="centerCrop"
         android:src="@mipmap/gis" />
 
+
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"

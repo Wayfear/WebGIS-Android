@@ -2,21 +2,17 @@ package com.example.kanxuan.baidumap;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.location.LocationManager;
-import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -46,7 +42,6 @@ import com.example.kanxuan.baidumap.Domain.LayerLineDate;
 import com.example.kanxuan.baidumap.Domain.LayerPointDate;
 import com.example.kanxuan.baidumap.Domain.LineDomain;
 import com.example.kanxuan.baidumap.Domain.MapData;
-import com.example.kanxuan.baidumap.Domain.MapDomain;
 import com.example.kanxuan.baidumap.Domain.PointDomain;
 import com.example.kanxuan.baidumap.Domain.SerilzeData;
 import com.example.kanxuan.baidumap.Domain.UpdateWebLineLayer;
@@ -55,41 +50,19 @@ import com.example.kanxuan.baidumap.Enums.StatusEnum;
 import com.example.kanxuan.baidumap.Enums.TypeEnum;
 import com.example.kanxuan.baidumap.Http.BaseResponse;
 import com.example.kanxuan.baidumap.HttpLoader.MapLoader;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import com.example.kanxuan.baidumap.Utils.GetUploadToken;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.HamButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.nightonke.boommenu.OnBoomListenerAdapter;
-import com.qiniu.android.http.ResponseInfo;
-import com.qiniu.android.storage.UpCompletionHandler;
-import com.qiniu.android.storage.UploadManager;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import javax.crypto.Mac;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import rx.functions.Action1;
 
-// 初始化的时候没有绑定数据
-// 线要一段一段初始化
-// 调整图层选择的样式
-//加入文件夹
-// 登录完成
+public class CommonUserActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity {
-
-    // Used to load the 'native-lib' library on application startup.
     private BoomMenuButton bmb;
     MapView mMapView = null;
     BaiduMap mBaiduMap = null;
@@ -106,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     LocationManager mLocationManager;
     private LocationClient mLocationClient = null;
 
-    static private String TAG = "MapActivity";
+    static private String TAG = "CommonUserActivity";
     Toolbar toolbar;
 
     @Override
@@ -114,12 +87,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         SDKInitializer.initialize(getApplicationContext());
         SDKInitializer.setCoordType(CoordType.GCJ02);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_common_user);
         bmb = (BoomMenuButton)findViewById(R.id.bmb);
         assert bmb != null;
 
         InitBmb();
-
 
         Intent lastIntent = getIntent();
         SerilzeData<BaseDomain> da = (SerilzeData<BaseDomain>)lastIntent.getSerializableExtra("maps");
@@ -129,38 +101,38 @@ public class MainActivity extends AppCompatActivity {
 
         historyData.add(new HistoryData(maps));
 
-       if(maps.size()!=0) {
-           MapLoader mapLoader = new MapLoader();
-           if(maps.get(0).getType()== TypeEnum.YJG) {
-               mapLoader.getCoverLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerPointDate>() {
-                   @Override
-                   public void call(LayerPointDate layerDate) {
-                       Log.e(TAG, "success");
-                       mapData = new MapData(layerDate);
-                       DrawCover();
-                   }
-               }, new Action1<Throwable>() {
-                   @Override
-                   public void call(Throwable throwable) {
-                       Log.e(TAG,"error message:"+ throwable.getMessage());
-                   }
-               });
-           }
-           else {
-               mapLoader.getLineLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerLineDate>() {
-                   @Override
-                   public void call(LayerLineDate layerDate) {
-                       Log.e(TAG, "success");
-                       mapData = new MapData(layerDate);
-                       DrawLine();
-                   }
-               }, new Action1<Throwable>() {
-                   @Override
-                   public void call(Throwable throwable) {
-                       Log.e(TAG,"error message:"+throwable.getMessage());
-                   }
-               });
-           }
+        if(maps.size()!=0) {
+            MapLoader mapLoader = new MapLoader();
+            if(maps.get(0).getType()== TypeEnum.YJG) {
+                mapLoader.getCoverLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerPointDate>() {
+                    @Override
+                    public void call(LayerPointDate layerDate) {
+                        Log.e(TAG, "success");
+                        mapData = new MapData(layerDate);
+                        DrawCover();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(TAG,"error message:"+ throwable.getMessage());
+                    }
+                });
+            }
+            else {
+                mapLoader.getLineLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerLineDate>() {
+                    @Override
+                    public void call(LayerLineDate layerDate) {
+                        Log.e(TAG, "success");
+                        mapData = new MapData(layerDate);
+                        DrawLine();
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(TAG,"error message:"+throwable.getMessage());
+                    }
+                });
+            }
 
         }
 
@@ -172,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         mBaiduMap.setMyLocationEnabled(true);
         mLocationClient = new LocationClient(getApplicationContext());
 
-        BDLocationListener listener = new MyLocationListener();
+        BDLocationListener listener = new CommonUserActivity.MyLocationListener();
         mLocationClient.registerLocationListener(listener);
         getHistoryData();
 
@@ -214,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
         bmb.clearBuilders();
         bmb.addBuilder(new HamButton.Builder().normalImageRes(R.mipmap.location).normalText("定位").subNormalText("获取个人定位"));
         bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.layer).normalText("选择图层").subNormalText("选择某个图层"));
-        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.add).normalText("添加图层").subNormalText("..."));
         bmb.setOnBoomListener(new OnBoomListenerAdapter() {
             @Override
             public void onClicked(int index, BoomButton boomButton) {
@@ -224,19 +195,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void SetBmbOnNew() {
-        bmb.clearBuilders();
-        bmb.addBuilder(new HamButton.Builder().normalImageRes(R.mipmap.location).normalText("添加元素").subNormalText("根据你的坐标添加"));
-        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.layer).normalText("保存图层").subNormalText("保存当前存储的元素"));
-        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.add).normalText("退出添加").subNormalText("不保存数据"));
-        bmb.setOnBoomListener(new OnBoomListenerAdapter() {
-            @Override
-            public void onClicked(int index, BoomButton boomButton) {
-                super.onClicked(index, boomButton);
-                saveButton(index);
-            }
-        });
-    }
+
 
     private void saveButton(int index) {
         switch (index) {
@@ -254,15 +213,15 @@ public class MainActivity extends AppCompatActivity {
                     if(points.size()>=2) {
                         for(int i=0;i<points.size()-1;i++) {
                             lines.add(new LineDomain(points.get(i).getX(),points.get(i).getY(),points.get(i).getZ(),
-                                    points.get(i+1).getX(),points.get(i+1).getY(),points.get(i+1).getZ(),StatusEnum.GOOD));
+                                    points.get(i+1).getX(),points.get(i+1).getY(),points.get(i+1).getZ(), StatusEnum.GOOD));
                         }
 
                         UpdateWebLineLayer updateWebLineLayer = new UpdateWebLineLayer(layerId, new CommonPipeDomain(lines));
                         mapLoader.updateLineLayer(updateWebLineLayer).subscribe(new Action1<BaseResponse<Object>>() {
-                                                                                      @Override
-                                                                                      public void call(BaseResponse<Object> objectBaseResponse) {
-                                                                                          Log.v(TAG, "success");
-                                                                                      }}
+                                                                                    @Override
+                                                                                    public void call(BaseResponse<Object> objectBaseResponse) {
+                                                                                        Log.v(TAG, "success");
+                                                                                    }}
                                 , new Action1<Throwable>() {
                                     @Override
                                     public void call(Throwable throwable) {
@@ -278,16 +237,16 @@ public class MainActivity extends AppCompatActivity {
                     points.addAll(mapData.getPointList());
                     UpdateWebPointLayer updateWebPointLayer = new UpdateWebPointLayer(layerId, new CommonCoverDomain(points));
                     mapLoader.updatePointLayer(updateWebPointLayer).subscribe(new Action1<BaseResponse<Object>>() {
-                          @Override
-                          public void call(BaseResponse<Object> objectBaseResponse) {
-                              Log.v(TAG, "success");
-                          }}
-                    , new Action1<Throwable>() {
-                        @Override
-                        public void call(Throwable throwable) {
-                            Log.e(TAG, "error message:" + throwable.getMessage());
-                        }
-                    });
+                                                                                  @Override
+                                                                                  public void call(BaseResponse<Object> objectBaseResponse) {
+                                                                                      Log.v(TAG, "success");
+                                                                                  }}
+                            , new Action1<Throwable>() {
+                                @Override
+                                public void call(Throwable throwable) {
+                                    Log.e(TAG, "error message:" + throwable.getMessage());
+                                }
+                            });
                 }
                 bmb.reboom();
                 break;
@@ -341,16 +300,12 @@ public class MainActivity extends AppCompatActivity {
                 bmb.reboom();
                 break;
             case 1:
-                Intent intent = new Intent(MainActivity.this, SelectLayerActivity.class);
+                Intent intent = new Intent(CommonUserActivity.this, SelectLayerActivity.class);
                 Bundle data = new Bundle();
                 data.putSerializable("history", new SerilzeData<HistoryData>(historyData));
                 intent.putExtras(data);
                 intent.setFlags(0);
                 startActivityForResult(intent,0);
-                bmb.reboom();
-                break;
-            case 2:
-                SetBmbOnNew();
                 bmb.reboom();
                 break;
         }
@@ -375,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             if(saveItems!=null) {
-               points.add(new PointDomain(location.getLongitude(), location.getLatitude(), 0, StatusEnum.GOOD));
+                points.add(new PointDomain(location.getLongitude(), location.getLatitude(), 0, StatusEnum.GOOD));
                 if(saveItems==TypeEnum.YJG) {
 
                     BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
@@ -415,64 +370,6 @@ public class MainActivity extends AppCompatActivity {
             }
             mBaiduMap.clear();
 
-            StringBuffer sb = new StringBuffer(256);
-            sb.append("time : ");
-            sb.append(location.getTime());
-            sb.append("\nerror code : ");
-            sb.append(location.getLocType());
-            sb.append("\nlatitude : ");
-            sb.append(location.getLatitude());
-            sb.append("\nlontitude : ");
-            sb.append(location.getLongitude());
-            sb.append("\nradius : ");
-            sb.append(location.getRadius());
-            if (location.getLocType() == BDLocation.TypeGpsLocation) {// GPS定位结果
-                sb.append("\nspeed : ");
-                sb.append(location.getSpeed());// 单位：公里每小时
-                sb.append("\nsatellite : ");
-                sb.append(location.getSatelliteNumber());
-                sb.append("\nheight : ");
-                sb.append(location.getAltitude());// 单位：米
-                sb.append("\ndirection : ");
-                sb.append(location.getDirection());// 单位度
-                sb.append("\naddr : ");
-                sb.append(location.getAddrStr());
-                sb.append("\ndescribe : ");
-                sb.append("gps定位成功");
-
-            } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {// 网络定位结果
-                sb.append("\naddr : ");
-                sb.append(location.getAddrStr());
-                //运营商信息
-                sb.append("\noperationers : ");
-                sb.append(location.getOperators());
-                sb.append("\ndescribe : ");
-                sb.append("网络定位成功");
-            } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {// 离线定位结果
-                sb.append("\ndescribe : ");
-                sb.append("离线定位成功，离线定位结果也是有效的");
-            } else if (location.getLocType() == BDLocation.TypeServerError) {
-                sb.append("\ndescribe : ");
-                sb.append("服务端网络定位失败，可以反馈IMEI号和大体定位时间到loc-bugs@baidu.com，会有人追查原因");
-            } else if (location.getLocType() == BDLocation.TypeNetWorkException) {
-                sb.append("\ndescribe : ");
-                sb.append("网络不同导致定位失败，请检查网络是否通畅");
-            } else if (location.getLocType() == BDLocation.TypeCriteriaException) {
-                sb.append("\ndescribe : ");
-                sb.append("无法获取有效定位依据导致定位失败，一般是由于手机的原因，处于飞行模式下一般会造成这种结果，可以试着重启手机");
-            }
-            sb.append("\nlocationdescribe : ");
-            sb.append(location.getLocationDescribe());// 位置语义化信息
-            List<Poi> list = location.getPoiList();// POI数据
-            if (list != null) {
-                sb.append("\npoilist size = : ");
-                sb.append(list.size());
-                for (Poi p : list) {
-                    sb.append("\npoi= : ");
-                    sb.append(p.getId() + " " + p.getName() + " " + p.getRank());
-                }
-            }
-            Log.d("BaiduLocationApiDem", sb.toString());
 
             BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
             //创建一个图层选项
@@ -544,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
         mBaiduMap.clear();
         LatLng target = new LatLng(0,0);
         Map<List<LatLng>, StatusEnum> data = mapData.ToDrawList();
-                // 添加图层功能
+        // 添加图层功能
         int i=0;
         for(Map.Entry<List<LatLng>, StatusEnum> entry:data.entrySet()){
             int color;
