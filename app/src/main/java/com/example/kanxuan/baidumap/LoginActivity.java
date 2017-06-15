@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.example.kanxuan.baidumap.Domain.AuthenticationRequest;
 import com.example.kanxuan.baidumap.Domain.MapDomain;
+import com.example.kanxuan.baidumap.Domain.MongoLayer;
 import com.example.kanxuan.baidumap.Domain.SerilzeData;
 import com.example.kanxuan.baidumap.Http.BaseResponse;
 import com.example.kanxuan.baidumap.Http.UserLoginResponse;
@@ -41,8 +42,6 @@ public class LoginActivity extends AppCompatActivity {
         emailView = (EditText) findViewById(R.id.et_email);
         passwordView = (EditText) findViewById(R.id.et_password);
         button = (Button) findViewById(R.id.btn_login);
-
-
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,24 +52,55 @@ public class LoginActivity extends AppCompatActivity {
                 mapLoader.Login(email, password).subscribe(new Action1<UserLoginResponse>() {
                     @Override
                     public void call(final UserLoginResponse userLoginResponseBaseResponse) {
-                        MapLoader mapLoader = new MapLoader();
-                        mapLoader.getMapsByAccountId(32, 0).subscribe(new Action1<List<MapDomain>>() {
-                            @Override
-                            public void call(List<MapDomain> o) {
-                                Intent intent = new Intent(LoginActivity.this, SelectMapActivity.class);
-                                Bundle data = new Bundle();
-                                data.putString("role", userLoginResponseBaseResponse.getRole());
-                                data.putSerializable("maps", new SerilzeData<MapDomain>(o));
-                                intent.putExtras(data);
-                                startActivity(intent);
-                            }
-                        }, new Action1<Throwable>() {
-                            @Override
-                            public void call(Throwable throwable) {
-                                Log.e(TAG, throwable.toString());
 
-                            }
-                        });
+                        if(userLoginResponseBaseResponse.getRole().equals("User")) {
+
+                            MapLoader mapLoader = new MapLoader();
+                            mapLoader.getAllLayer().subscribe(new Action1<List<MongoLayer>>() {
+                                @Override
+                                public void call(List<MongoLayer> mongoLayers) {
+                                    Intent intent = new Intent(LoginActivity.this, CommonUserActivity.class);
+                                    intent.putExtra("userId", userLoginResponseBaseResponse.getId());
+                                    Bundle data = new Bundle();
+                                    data.putSerializable("layers", new SerilzeData<MongoLayer>(mongoLayers));
+                                    intent.putExtras(data);
+                                    startActivity(intent);
+                                }
+                            }, new Action1<Throwable>() {
+                                @Override
+                                public void call(Throwable throwable) {
+                                    Log.e(TAG, "Fail");
+                                }
+                            });
+
+                        }
+                        else {
+
+                            MapLoader mapLoader = new MapLoader();
+                            mapLoader.getMapsByAccountId(32, 0).subscribe(new Action1<List<MapDomain>>() {
+                                @Override
+                                public void call(List<MapDomain> o) {
+                                    Intent intent = new Intent(LoginActivity.this, SelectMapActivity.class);
+                                    Bundle data = new Bundle();
+                                    data.putString("role", userLoginResponseBaseResponse.getRole());
+                                    data.putSerializable("maps", new SerilzeData<MapDomain>(o));
+                                    intent.putExtras(data);
+                                    startActivity(intent);
+
+                                }
+                            }, new Action1<Throwable>() {
+                                @Override
+                                public void call(Throwable throwable) {
+                                    Log.e(TAG, throwable.toString());
+
+                                }
+                            });
+
+
+
+                        }
+
+
                     }
 
 

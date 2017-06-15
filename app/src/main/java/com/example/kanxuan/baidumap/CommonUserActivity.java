@@ -10,9 +10,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
-
+import com.baidu.mapapi.map.InfoWindow.OnInfoWindowClickListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -42,19 +45,24 @@ import com.example.kanxuan.baidumap.Domain.LayerLineDate;
 import com.example.kanxuan.baidumap.Domain.LayerPointDate;
 import com.example.kanxuan.baidumap.Domain.LineDomain;
 import com.example.kanxuan.baidumap.Domain.MapData;
+import com.example.kanxuan.baidumap.Domain.MongoLayer;
+import com.example.kanxuan.baidumap.Domain.MyBaseDomain;
 import com.example.kanxuan.baidumap.Domain.PointDomain;
 import com.example.kanxuan.baidumap.Domain.SerilzeData;
 import com.example.kanxuan.baidumap.Domain.UpdateWebLineLayer;
 import com.example.kanxuan.baidumap.Domain.UpdateWebPointLayer;
+import com.example.kanxuan.baidumap.Domain.WebLayer;
 import com.example.kanxuan.baidumap.Enums.StatusEnum;
 import com.example.kanxuan.baidumap.Enums.TypeEnum;
 import com.example.kanxuan.baidumap.Http.BaseResponse;
 import com.example.kanxuan.baidumap.HttpLoader.MapLoader;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.HamButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.nightonke.boommenu.OnBoomListenerAdapter;
-
+import com.baidu.mapapi.map.InfoWindow;
+import android.graphics.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,15 +74,13 @@ public class CommonUserActivity extends AppCompatActivity {
     private BoomMenuButton bmb;
     MapView mMapView = null;
     BaiduMap mBaiduMap = null;
+    int publicUserID;
 //    LocationHelper locationHelper;
 
-    private MapData mapData;
-    private List<HistoryData> historyData = new ArrayList<>();
+    String publicLayerId;
+    Marker publicUserMarker=null;
 
-
-    private TypeEnum saveItems = null;
-
-    private List<PointDomain> points = new ArrayList<>();
+    private boolean isPopUp = false;
 
     LocationManager mLocationManager;
     private LocationClient mLocationClient = null;
@@ -82,59 +88,22 @@ public class CommonUserActivity extends AppCompatActivity {
     static private String TAG = "CommonUserActivity";
     Toolbar toolbar;
 
+    List<MongoLayer> allData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SDKInitializer.initialize(getApplicationContext());
         SDKInitializer.setCoordType(CoordType.GCJ02);
         setContentView(R.layout.activity_common_user);
+        Intent lastIntent = getIntent();
+        publicUserID = lastIntent.getIntExtra("userId", 0);
+        SerilzeData<MongoLayer> da = (SerilzeData<MongoLayer>)lastIntent.getSerializableExtra("layers");
+        allData = da.getData();
         bmb = (BoomMenuButton)findViewById(R.id.bmb);
         assert bmb != null;
 
         InitBmb();
-
-        Intent lastIntent = getIntent();
-        SerilzeData<BaseDomain> da = (SerilzeData<BaseDomain>)lastIntent.getSerializableExtra("maps");
-        List<BaseDomain> maps = da.getData();
-        layerId = maps.get(0).getId();
-        saveItems = maps.get(0).getType();
-
-        historyData.add(new HistoryData(maps));
-
-        if(maps.size()!=0) {
-            MapLoader mapLoader = new MapLoader();
-            if(maps.get(0).getType()== TypeEnum.YJG) {
-                mapLoader.getCoverLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerPointDate>() {
-                    @Override
-                    public void call(LayerPointDate layerDate) {
-                        Log.e(TAG, "success");
-                        mapData = new MapData(layerDate);
-                        DrawCover();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        Log.e(TAG,"error message:"+ throwable.getMessage());
-                    }
-                });
-            }
-            else {
-                mapLoader.getLineLayerByLayerID(maps.get(0).getId()).subscribe(new Action1<LayerLineDate>() {
-                    @Override
-                    public void call(LayerLineDate layerDate) {
-                        Log.e(TAG, "success");
-                        mapData = new MapData(layerDate);
-                        DrawLine();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        Log.e(TAG,"error message:"+throwable.getMessage());
-                    }
-                });
-            }
-
-        }
 
         mMapView = (MapView) findViewById(R.id.bmapView);
 
@@ -146,39 +115,59 @@ public class CommonUserActivity extends AppCompatActivity {
 
         BDLocationListener listener = new CommonUserActivity.MyLocationListener();
         mLocationClient.registerLocationListener(listener);
-        getHistoryData();
 
         mBaiduMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Information info = (Information) marker.getExtraInfo().get("info");
-                TextView tv = new TextView(getApplicationContext());
-                tv.setBackgroundResource(R.mipmap.ground_overlay);
-                tv.setGravity(Gravity.CENTER_VERTICAL);
-                tv.setText(info.getStatus().toString());
-                //定义用于显示该InfoWindow的坐标点
-                LatLng pt = new LatLng(marker.getPosition().latitude, marker.getPosition().longitude);
-                //创建InfoWindow , 传入 view， 地理坐标， y 轴偏移量
-                InfoWindow mInfoWindow = new InfoWindow(tv, pt, -47);
-                //显示InfoWindow
-                mBaiduMap.showInfoWindow(mInfoWindow);
+                if(marker==publicUserMarker) {
+                    return false;
+                }
+                final PointDomain point = (PointDomain) marker.getExtraInfo().get("point");
+                View linlayout=CommonUserActivity.this.getLayoutInflater().inflate(R.layout.pop_layout, null);
+                Button btnClick=(Button) linlayout.findViewById(R.id.content);
+                btnClick.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent intent = new Intent(CommonUserActivity.this, ReportActivity.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putSerializable("point", point);
+                        intent.putExtra("layerId", publicLayerId);
+                        intent.putExtra("userId", publicUserID);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                    }
+                });
 
+                Button closeBtn=(Button) linlayout.findViewById(R.id.close);
+                closeBtn.setOnClickListener(new View.OnClickListener() {
 
-//                Intent intent = new Intent(MainActivity.this, ItemsActivity.class);
-//                Bundle data = new Bundle();
-//                data.putSerializable("info",info);
-//                data.putString("layerId", layerId);
-//                if(info.getType() == TypeEnum.XSG) {
-//                    data.putSerializable("lines", new SerilzeData<LineDomain>(mapData.getLineList()));
-//                }
-//                else {
-//                    data.putSerializable("points", new SerilzeData<PointDomain>( mapData.getPointList()));
-//                }
-//                intent.putExtras(data);
-//                startActivity(intent);
+                    @Override
+                    public void onClick(View arg0) {
+                        mBaiduMap.hideInfoWindow();
+                        isPopUp = false;
+                    }
+                });
+
+                final LatLng ll = marker.getPosition();
+                InfoWindow mInfoWindowDetail=new InfoWindow(linlayout, ll, -100);
+                if(isPopUp) {
+                    mBaiduMap.hideInfoWindow();
+                    isPopUp = false;
+                }
+                else {
+                    mBaiduMap.showInfoWindow(mInfoWindowDetail);
+                    isPopUp = true;
+                }
+
                 return false;
+
             }
         });
+//        FindPosition();
+        DrawCover(0);
+    }
+
+    private void getAllData() {
 
     }
 
@@ -186,6 +175,7 @@ public class CommonUserActivity extends AppCompatActivity {
         bmb.clearBuilders();
         bmb.addBuilder(new HamButton.Builder().normalImageRes(R.mipmap.location).normalText("定位").subNormalText("获取个人定位"));
         bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.layer).normalText("选择图层").subNormalText("选择某个图层"));
+        bmb.addBuilder((new HamButton.Builder()).normalImageRes(R.mipmap.add).normalText("添加报修").subNormalText("此报修你现在的坐标"));
         bmb.setOnBoomListener(new OnBoomListenerAdapter() {
             @Override
             public void onClicked(int index, BoomButton boomButton) {
@@ -195,100 +185,6 @@ public class CommonUserActivity extends AppCompatActivity {
         });
     }
 
-
-
-    private void saveButton(int index) {
-        switch (index) {
-            case 0:
-                FindPosition();
-                bmb.reboom();
-                break;
-            case 1:
-                MapLoader mapLoader = new MapLoader();
-
-                List<LineDomain> lines = new ArrayList<>();
-
-                if(mapData.getType()==TypeEnum.XSG) {
-                    lines.addAll(mapData.getLineList());
-                    if(points.size()>=2) {
-                        for(int i=0;i<points.size()-1;i++) {
-                            lines.add(new LineDomain(points.get(i).getX(),points.get(i).getY(),points.get(i).getZ(),
-                                    points.get(i+1).getX(),points.get(i+1).getY(),points.get(i+1).getZ(), StatusEnum.GOOD));
-                        }
-
-                        UpdateWebLineLayer updateWebLineLayer = new UpdateWebLineLayer(layerId, new CommonPipeDomain(lines));
-                        mapLoader.updateLineLayer(updateWebLineLayer).subscribe(new Action1<BaseResponse<Object>>() {
-                                                                                    @Override
-                                                                                    public void call(BaseResponse<Object> objectBaseResponse) {
-                                                                                        Log.v(TAG, "success");
-                                                                                    }}
-                                , new Action1<Throwable>() {
-                                    @Override
-                                    public void call(Throwable throwable) {
-                                        Log.e(TAG, "error message:" + throwable.getMessage());
-                                    }
-                                });
-
-
-                    }
-
-                }
-                else {
-                    points.addAll(mapData.getPointList());
-                    UpdateWebPointLayer updateWebPointLayer = new UpdateWebPointLayer(layerId, new CommonCoverDomain(points));
-                    mapLoader.updatePointLayer(updateWebPointLayer).subscribe(new Action1<BaseResponse<Object>>() {
-                                                                                  @Override
-                                                                                  public void call(BaseResponse<Object> objectBaseResponse) {
-                                                                                      Log.v(TAG, "success");
-                                                                                  }}
-                            , new Action1<Throwable>() {
-                                @Override
-                                public void call(Throwable throwable) {
-                                    Log.e(TAG, "error message:" + throwable.getMessage());
-                                }
-                            });
-                }
-                bmb.reboom();
-                break;
-            case 2:
-                saveItems = null;
-                points.clear();
-                InitBmb();
-                bmb.reboom();
-                break;
-        }
-    }
-
-//    private void ShowWindow() {
-//        //创建InfoWindow展示的view
-//        Button button = new Button(getApplicationContext());
-//        button.setBackgroundResource(R.drawable.popup);
-////定义用于显示该InfoWindow的坐标点
-//        LatLng pt = new LatLng(39.86923, 116.397428);
-////创建InfoWindow , 传入 view， 地理坐标， y 轴偏移量
-//        InfoWindow mInfoWindow = new InfoWindow(button, pt, -47);
-////显示InfoWindow
-//        mBaiduMap.showInfoWindow(mInfoWindow);
-//    }
-
-
-
-
-    private void getHistoryData() {
-        MapLoader mapLoader = new MapLoader();
-        mapLoader.getHistoriesByMapId(230).subscribe(new Action1<List<HistoryData>>() {
-            @Override
-            public void call(List<HistoryData> historyDatas) {
-                historyData.addAll(historyDatas);
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                Log.e(TAG, "error message:" + throwable.getMessage());
-            }
-        });
-
-    }
 
     private void changeBoomButton(int index) {
 
@@ -300,13 +196,17 @@ public class CommonUserActivity extends AppCompatActivity {
                 bmb.reboom();
                 break;
             case 1:
-                Intent intent = new Intent(CommonUserActivity.this, SelectLayerActivity.class);
+                Intent intent = new Intent(CommonUserActivity.this, CommonUserSelectLayer.class);
                 Bundle data = new Bundle();
-                data.putSerializable("history", new SerilzeData<HistoryData>(historyData));
+                data.putSerializable("allData", new SerilzeData<MongoLayer>(allData));
                 intent.putExtras(data);
+                intent.putExtra("userId", publicUserID);
                 intent.setFlags(0);
                 startActivityForResult(intent,0);
                 bmb.reboom();
+                break;
+            case 2:
+
                 break;
         }
     }
@@ -329,62 +229,24 @@ public class CommonUserActivity extends AppCompatActivity {
             if (location == null) {
                 return;
             }
-            if(saveItems!=null) {
-                points.add(new PointDomain(location.getLongitude(), location.getLatitude(), 0, StatusEnum.GOOD));
-                if(saveItems==TypeEnum.YJG) {
-
-                    BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
-                    //创建一个图层选项
-                    LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
-                    OverlayOptions options = new MarkerOptions().position(latlng).icon(bitmapDescriptor);
-                    mBaiduMap.addOverlay(options);
-                    MapStatus mMapStatus = new MapStatus.Builder()
-                            .target(latlng)
-                            .zoom(16)
-                            .build();
-                    //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
-                    MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
-                    //改变地图状态
-                    mBaiduMap.setMapStatus(mMapStatusUpdate);
-                }
-                else if(saveItems==TypeEnum.XSG) {
-
-                    List<LatLng> newLine = new ArrayList<>();
-
-                    for(int i=0;i<points.size();i++){
-                        newLine.add(new LatLng(points.get(i).getY(),points.get(i).getX()));
-                    }
-                    LatLng target = new LatLng(points.get(points.size()-1).getY(),points.get(points.size()-1).getX());
-
-                    OverlayOptions ooPolyline = new PolylineOptions().width(5)
-                            .color(0xAAFF0000).points(newLine).visible(true);
-                    mBaiduMap.addOverlay(ooPolyline);
-                    MapStatus mMapStatus = new MapStatus.Builder()
-                            .target(target)
-                            .zoom(16)
-                            .build();
-                    MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
-                    mBaiduMap.setMapStatus(mMapStatusUpdate);
-                }
-                return;
-            }
-            mBaiduMap.clear();
-
 
             BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
             //创建一个图层选项
             LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
             OverlayOptions options = new MarkerOptions().position(latlng).icon(bitmapDescriptor);
-            mBaiduMap.addOverlay(options);
+            if(publicUserMarker!=null) {
+                publicUserMarker.remove();
+            }
+            publicUserMarker = (Marker)mBaiduMap.addOverlay(options);
+
             MapStatus mMapStatus = new MapStatus.Builder()
                     .target(latlng)
-                    .zoom(16)
+                    .zoom(18)
                     .build();
             //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
             MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
             //改变地图状态
             mBaiduMap.setMapStatus(mMapStatusUpdate);
-
 
         }
 
@@ -395,105 +257,52 @@ public class CommonUserActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode==0 && resultCode==0) {
-            Bundle bundle = data.getExtras();
-            int group = bundle.getInt("gIndex");
-            int child = bundle.getInt("cIndex");
-            MapLoader mapLoader = new MapLoader();
-            layerId  = historyData.get(group).getData().get(child).getId();
-            if(historyData.get(group).getData().get(child).getType()== TypeEnum.YJG) {
-                mapLoader.getCoverLayerByLayerID(historyData.get(group).getData().get(child).getId()).subscribe(new Action1<LayerPointDate>() {
-                    @Override
-                    public void call(LayerPointDate layerDate) {
-                        Log.e(TAG, "success");
-                        mapData = new MapData(layerDate);
-                        DrawCover();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        Log.e(TAG,"error message:"+throwable.getMessage());
-                    }
-                });
-            }
-            else {
-                mapLoader.getLineLayerByLayerID(historyData.get(group).getData().get(child).getId()).subscribe(new Action1<LayerLineDate>() {
-                    @Override
-                    public void call(LayerLineDate layerDate) {
-                        Log.e(TAG, "success");
-                        mapData = new MapData(layerDate);
-                        DrawLine();
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        Log.e(TAG,"error message:"+throwable.getMessage());
-                    }
-                });
-            }
+            int index = data.getIntExtra("index", 0);
+            DrawCover(index);
         }
-
-
     }
+    int[][] picSelect = {
+            {R.mipmap.well_black,R.mipmap.well_red,R.mipmap.well_yellow, R.mipmap.well_green, R.mipmap.well_blue},
+            {R.mipmap.light_black, R.mipmap.light_red,R.mipmap.light_yellow,R.mipmap.light_green,R.mipmap.light_blue}};
 
 
-
-    public void DrawLine(){
-        mBaiduMap.clear();
-        LatLng target = new LatLng(0,0);
-        Map<List<LatLng>, StatusEnum> data = mapData.ToDrawList();
-        // 添加图层功能
-        int i=0;
-        for(Map.Entry<List<LatLng>, StatusEnum> entry:data.entrySet()){
-            int color;
-            target = entry.getKey().get(0);
-            if(entry.getValue()==StatusEnum.GOOD) {
-                color = 0xAAFF0000;
-            }
-            else {
-                color = 0xAAFF00FF;
-            }
-            OverlayOptions ooPolyline = new PolylineOptions().width(5)
-                    .color(color).points(entry.getKey()).visible(true);
-            Marker marker = (Marker)mBaiduMap.addOverlay(ooPolyline);
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("info", new Information(TypeEnum.XSG, entry.getValue(),i));
-            i++;
-        }
-        if(data.size()!=0) {
-            MapStatus mMapStatus = new MapStatus.Builder()
-                    .target(target)
-                    .zoom(16)
-                    .build();
-            MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
-            mBaiduMap.setMapStatus(mMapStatusUpdate);
-        }
-
-    }
-
-    public void DrawCover() {
+    public void DrawCover(int index) {
         mBaiduMap.clear();
 
+
+        if(allData==null||allData.size()==0)
+            return;
+        MongoLayer mongoLayer;
+        if(allData.size()>index) {
+            mongoLayer = allData.get(index);
+        }
+        else {
+            mongoLayer = allData.get(0);
+        }
+        publicLayerId = mongoLayer.getId();
         LatLng latlng = new LatLng(10,10);
-        for(int i=0;i<mapData.getPointList().size();i++) {
-            BitmapDescriptor bitmapDescriptor;
-            if(mapData.getPointList().get(i).getStatus()==StatusEnum.GOOD) {
-                bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
-            }
-            else {
-                bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);
-            }
-            latlng = new LatLng(mapData.getPointList().get(i).getY(), mapData.getPointList().get(i).getX());
+        List<PointDomain> data = mongoLayer.getData().getPointList();
+        int indexi = 0, indexj = 0;
+        if (mongoLayer.getData().getType()==TypeEnum.YJG) {
+            indexi = 0;
+        }
+        else if(mongoLayer.getData().getType()==TypeEnum.LD) {
+            indexi = 1;
+        }
+        for(int i=0;i<data.size();i++) {
+            BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(picSelect[indexi][data.get(i).getStatus().getCode()]);
+            latlng = new LatLng(data.get(i).getY(), data.get(i).getX());
             OverlayOptions options = new MarkerOptions().position(latlng).icon(bitmapDescriptor);
             Marker marker = (Marker) mBaiduMap.addOverlay(options);
             Bundle bundle = new Bundle();
 
-            bundle.putSerializable("info", new Information(mapData.getPointList().get(i),i));
+            bundle.putSerializable("point", data.get(i));
             marker.setExtraInfo(bundle);
 
         }
         MapStatus mMapStatus = new MapStatus.Builder()
                 .target(latlng)
-                .zoom(16)
+                .zoom(18)
                 .build();
         //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
         MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);

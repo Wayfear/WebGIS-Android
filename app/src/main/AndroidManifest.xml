@@ -74,6 +74,18 @@
         <activity
             android:name=".CommonUserActivity"
             android:label="@string/title_activity_common_user"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".ReportActivity"
+            android:label="@string/title_activity_report"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".CommonUserSelectLayer"
+            android:label="@string/title_activity_common_user_select_layer"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".SpecialReport"
+            android:label="@string/title_activity_special_report"
             android:theme="@style/AppTheme"></activity>
     </application>
 

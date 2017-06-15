@@ -25,4 +25,7 @@
     <string name="title_activity_items">ItemsActivity</string>
     <string name="title_activity_main2">Main2Activity</string>
     <string name="title_activity_common_user">CommonUserActivity</string>
+    <string name="title_activity_report">ReportActivity</string>
+    <string name="title_activity_common_user_select_layer">CommonUserSelectLayer</string>
+    <string name="title_activity_special_report">SpecialReport</string>
 </resources>

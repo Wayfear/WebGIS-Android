@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             if(saveItems!=null) {
-               points.add(new PointDomain(location.getLongitude(), location.getLatitude(), 0, StatusEnum.GOOD));
+               points.add(new PointDomain(location.getLongitude(), location.getLatitude(), 0, StatusEnum.GOOD, ""));
                 if(saveItems==TypeEnum.YJG) {
 
                     BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_map);

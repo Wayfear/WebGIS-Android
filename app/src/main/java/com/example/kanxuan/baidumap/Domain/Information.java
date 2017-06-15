@@ -13,6 +13,9 @@ public class Information implements Serializable{
 
     private int index;
     private TypeEnum type;
+    private PointDomain pointDomain;
+    private int userId;
+
 
     private StatusEnum status;
 

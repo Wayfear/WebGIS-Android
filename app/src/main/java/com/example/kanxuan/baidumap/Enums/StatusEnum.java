@@ -5,26 +5,26 @@ package com.example.kanxuan.baidumap.Enums;
  */
 
 public enum  StatusEnum {
-    LOST("001", "丢失"),
-    BREAK("002", "损坏"),
-    BLOCK("003", "堵塞"),
-    GOOD("004", "完好"),
-    SERVICE("005", "维修");
+    LOST(0, "丢失"),
+    BREAK(1, "破坏"),
+    BLOCK(2, "故障"),
+    GOOD(3, "完好"),
+    SERVICE(4, "维修");
 
 
-    private String code;
+    private int code;
     private String value;
 
-    StatusEnum(String code, String value) {
+    StatusEnum(int code, String value) {
         this.code = code;
         this.value = value;
     }
 
-    public String getCode() {
+    public int getCode() {
         return code;
     }
 
-    public void setCode(String code) {
+    public void setCode(int code) {
         this.code = code;
     }
 
@@ -39,6 +39,15 @@ public enum  StatusEnum {
     public static StatusEnum getEnum(String status) {
         for (StatusEnum statusEnum : StatusEnum.values()) {
             if (statusEnum.name().equals(status)) {
+                return statusEnum;
+            }
+        }
+        return null;
+    }
+
+    public static StatusEnum getEnumByNum(int index) {
+        for (StatusEnum statusEnum : StatusEnum.values()) {
+            if (statusEnum.getCode()==index) {
                 return statusEnum;
             }
         }

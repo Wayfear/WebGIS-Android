@@ -5,8 +5,11 @@ import com.example.kanxuan.baidumap.Domain.HistoryData;
 import com.example.kanxuan.baidumap.Domain.LayerLineDate;
 import com.example.kanxuan.baidumap.Domain.LayerPointDate;
 import com.example.kanxuan.baidumap.Domain.MapDomain;
+import com.example.kanxuan.baidumap.Domain.MongoLayer;
+import com.example.kanxuan.baidumap.Domain.MongoRepair;
 import com.example.kanxuan.baidumap.Domain.UpdateWebLineLayer;
 import com.example.kanxuan.baidumap.Domain.UpdateWebPointLayer;
+import com.example.kanxuan.baidumap.Domain.WebRepair;
 import com.example.kanxuan.baidumap.Http.BaseResponse;
 import com.example.kanxuan.baidumap.Http.ObjectLoader;
 import com.example.kanxuan.baidumap.Http.PayLoad;
@@ -88,7 +91,13 @@ public class MapLoader extends ObjectLoader{
         return observe(mapService.Login(username, password).map(new PayLoad<UserLoginResponse>()));
     }
 
+    public  Observable<List<MongoLayer>> getAllLayer() {
+        return observe(layerService.getAllLayer().map(new PayLoad<List<MongoLayer>>()));
+    }
 
+    public Observable<BaseResponse<Object>> createRepair(WebRepair webRepair){
+        return observe(mapService.createRepair(webRepair));
+    }
 
 
 
@@ -105,6 +114,9 @@ public class MapLoader extends ObjectLoader{
         @FormUrlEncoded
         @POST("auth/token")
         Observable<BaseResponse<UserLoginResponse>> Login(@Field("username") String username, @Field("password") String password);
+
+        @POST("repair/repair")
+        Observable<BaseResponse<Object>> createRepair(@Body WebRepair webRepair);
 
     }
 
@@ -132,6 +144,9 @@ public class MapLoader extends ObjectLoader{
 
         @PATCH("layer/layers/point/id")
         Observable<BaseResponse<Object>> updatePointLayer(@Body UpdateWebPointLayer webLater);
+
+        @GET("layer/layers/all")
+        Observable<BaseResponse<List<MongoLayer>>> getAllLayer();
 
 
         @PATCH("layer/layers/line/id")
